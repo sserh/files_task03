@@ -3,6 +3,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class Main {
@@ -29,10 +30,15 @@ public class Main {
 
         //удаляем файлы сохранений
         deleteSaves(datFileList);
+
+        //разархивируем файлы сохранений
+        openZip("arc.zip", saveDirectory);
+
+        //выведем в консоль
+        System.out.println(openProgress("File_2"));
     }
 
     public static void saveGame(String saveFileName, GameProgress gameProgress) {
-
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(saveDirectory + saveFileName + ".dat")) {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
@@ -40,6 +46,19 @@ public class Main {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    public static GameProgress openProgress(String saveFileNAme) {
+
+        GameProgress gameProgress = null;
+
+        try (FileInputStream fileInputStream = new FileInputStream(saveDirectory + saveFileNAme + ".dat");
+             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
+                 gameProgress = (GameProgress) objectInputStream.readObject();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return gameProgress;
     }
 
         public static void zipSaves(String zipFileName, List<String> savesList) {
@@ -57,6 +76,25 @@ public class Main {
                 } catch (IOException e) {
                     System.out.println(e.getMessage());
                 }
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void openZip(String unzipFileName, String unzipFolder) {
+
+        try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(unzipFolder + unzipFileName))) {
+            ZipEntry entry;
+            String name;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                name = entry.getName();
+                FileOutputStream fileOutputStream = new FileOutputStream(unzipFolder + name);
+                for (int i = zipInputStream.read(); i != -1; i = zipInputStream.read()) {
+                    fileOutputStream.write(i);
+                }
+                fileOutputStream.flush();
+                fileOutputStream.close();
             }
         } catch (IOException e) {
             System.out.println(e.getMessage());
